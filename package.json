@@ -1,0 +1,27 @@
+{
+  "name": "chittu-tdd-kit",
+  "version": "1.0.0",
+  "description": "tdd kit for codeception testing framework",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naveen17797/Chittu-TDD-Kit.git"
+  },
+  "author": "Naveen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/naveen17797/Chittu-TDD-Kit/issues"
+  },
+  "homepage": "https://github.com/naveen17797/Chittu-TDD-Kit#readme",
+  "devDependencies": {
+    "electron": "^7.1.1"
+  },
+  "dependencies": {
+    "bootstrap": "^4.3.1",
+    "font-awesome": "^4.7.0",
+    "vue": "^2.6.10"
+  }
+}

@@ -1,0 +1,123 @@
+<title>Chittu TDD Kit</title>
+
+<link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.css">
+
+<div class="container">
+    
+    <div class="row">
+        <div class="col-sm-6 text-left">
+            <table class="table">
+                <tr>
+                    <td class="text-center">
+                        Test Configuration
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b>choose the test suites you want to run</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox" value="unit" name="test_type"> Unit Test
+                    </td>
+                </tr>
+            
+                <tr>
+                    <td>
+                        <input type="checkbox" value="unit" name="test_type"> Acceptance Test
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <input type="checkbox" value="unit" name="test_type"> Functional Test
+                    </td>
+                </tr>
+            
+                <tr>
+                    <td>
+                        <b>Run tests as you type (useful for TDD)</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="checkbox"> Automatically run tests on file change
+                    </td>
+                </tr>
+            </table>
+            
+        </div>
+        <div class="col-sm-6">
+
+            <table class="table">
+                <tr>
+                    <td class="text-center">
+                        Path Configuration
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                            <span class="input-group-text bg-light">PHP Binary Path</span>
+                            </div>
+                            <input type="text" class="form-control" disabled>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-primary">Browse</button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>     
+                <tr>
+                    <td>
+                        <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                <span class="input-group-text bg-light">Codcept Binary Path</span>
+                                </div>
+                                <input type="text" class="form-control" disabled>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-primary">Browse</button>
+                                </div>
+                            </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>        
+
+                        <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                <span class="input-group-text bg-light">Your Project Root</span>
+                                </div>
+                                <input type="text" class="form-control" disabled>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-primary">Browse</button>
+                                </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12 text-center">
+            <br/>
+            <button class="btn btn-primary">Run Tests</button>
+            <br/>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6 text-center">
+        </div>
+        <div class="col-sm-6">
+            <br/>
+            <table class="table table-striped">
+                <tr><th>Failed Tests</th></tr>
+            </table>
+        </div>
+</div>
+
+
+<script src="./node_modules/vue/dist/vue.js"></script>
