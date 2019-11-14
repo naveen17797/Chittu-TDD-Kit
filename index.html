@@ -130,6 +130,7 @@ const fs = require('fs')
 const Store = require('electron-store');
 const store = new Store();
 
+// method to store and fetch the path data
 function getData() {
     var result = store.get('preferences')
     if (result == undefined) {
@@ -143,6 +144,9 @@ function getData() {
         return result
     }
 }
+
+// make a bus to emit events
+const main_bus = new Vue({})
 
 
 new Vue({
@@ -170,10 +174,24 @@ new Vue({
             }
 
         },
+
+        validateProjectRoot(root) {
+            const output_dir = path.join(root, "tests", "_output")
+            if (fs.existsSync(output_dir)) {
+                return true
+            }
+            else {
+                alert(root + " does not have codeception tests," +
+                "please initialise codeception and then choose the project folder")
+                return false
+            }
+            
+        },
+
         validatePaths() {
             return this.isFileOrFolder(this.preferences.php_binary_file) 
                 && this.isFileOrFolder(this.preferences.codeception_binary_file)
-                && this.isFileOrFolder(this.preferences.project_root)
+                && this.validateProjectRoot(this.preferences.project_root)
         },
         allPathsAreNotEmpty() {
             return this.preferences.php_binary_file != "" &&
@@ -187,27 +205,31 @@ new Vue({
             shell_command += " run unit"
             return shell_command
         },
-        
+        sendSuccessNotification(message) {
+
+        },
+
+        checkIfTestsFailedAndSendNotification() {
+            if (fs.existsSync(
+                path.join(this.preferences.project_root, "tests", "_output", "failed"))
+            ) {
+                // tests failed, so read the file line by line and send failed notification
+            }
+            else {
+                this.sendSuccessNotification()
+            }
+        },
+
         runTests() {
             
             if (this.allPathsAreNotEmpty())
             {
                 if (this.validatePaths()) {
 
-                    let spawn = require("child_process").spawn;
                     const exec = require('child_process').exec;
-                    const child = exec(constructShellCommand(),
+                    const child = exec(this.constructShellCommand(),
                         (error, stdout, stderr) => {
-                            if (error !== null) {
-                                new Notification('Error', {
-                                    body: 'Problem in executing the tests'
-                                })
-                            }
-                            else if (fs.existsSync(this.preferences.project_root)) {
-                                new Notification('Passed', {
-                                    body: 'All Tests Passed'
-                                })
-                            }
+                            console.log(error)
                     });
                 }
             }
