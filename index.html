@@ -62,7 +62,7 @@
                             <div class="input-group-prepend">
                             <span class="input-group-text bg-light">PHP Binary Path</span>
                             </div>
-                            <input type="text" class="form-control" disabled v-model="preferences.php_binary_file">
+                            <input type="text" class="form-control"  v-model="preferences.php_binary_file">
                             <div class="input-group-append">
                                 <button class="btn btn-outline-primary" @click="chooseBinaryFile('php')">Browse</button>
                             </div>
@@ -75,7 +75,7 @@
                                 <div class="input-group-prepend">
                                 <span class="input-group-text bg-light">Codcept Binary Path</span>
                                 </div>
-                                <input type="text" class="form-control" disabled v-model="preferences.codeception_binary_file">
+                                <input type="text" class="form-control"  v-model="preferences.codeception_binary_file">
                                 <div class="input-group-append">
                                     <button class="btn btn-outline-primary" @click="chooseBinaryFile('codecept')">Browse</button>
                                 </div>
@@ -89,9 +89,9 @@
                                 <div class="input-group-prepend">
                                 <span class="input-group-text bg-light">Your Project Root</span>
                                 </div>
-                                <input type="text" class="form-control" disabled>
+                                <input type="text" class="form-control" v-model="preferences.project_root">
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-primary">Browse</button>
+                                    <button class="btn btn-outline-primary" @click="chooseProjectFolder()">Browse</button>
                                 </div>
                         </div>
                     </td>
@@ -104,7 +104,7 @@
     <div class="row">
         <div class="col-sm-12 text-center">
             <br/>
-            <button class="btn btn-primary">Run Tests</button>
+            <button class="btn btn-primary" @click="runTests()">Run Tests</button>
             <br/>
         </div>
     </div>
@@ -127,31 +127,63 @@ const {dialog} = require('electron').remote;
 
 
 
-
-
 new Vue({
     el: "#main_screen",
     data: {
         preferences:{
             php_binary_file: "",
             codeception_binary_file: "",
+            project_root:"",
         },
     },
     methods: {
+
+        runTests() {
+        
+            if (this.preferences.php_binary_file != "" &&
+            this.preferences.codeception_binary_file != "" && 
+            this.preferences.project_root != "")
+            {
+                var shell_command = "cd " + this.preferences.project_root + " && "
+                shell_command += this.preferences.php_binary_file + " " + this.preferences.codeception_binary_file
+                shell_command += " run unit"
+                let spawn = require("child_process").spawn;
+
+                const exec = require('child_process').exec;
+                const child = exec(shell_command,
+                    (error, stdout, stderr) => {
+                        console.log(`stdout: ${stdout}`);
+                        console.log(`stderr: ${stderr}`);
+                        if (error !== null) {
+                            console.log(`exec error: ${error}`);
+                        }
+                });
+            }
+            else {
+                alert("fill the path fields")
+            }
+        },
+
+        chooseProjectFolder() {
+            let options = {
+                properties: ['openDirectory'],
+            }
+            let folderPromise = dialog.showOpenDialog(options)
+            const self = this
+            folderPromise.then(function(folderObject) {
+                let folderPaths = folderObject.filePaths
+                const choosen_folder_path = folderPaths[0]
+                self.preferences.project_root = choosen_folder_path
+            })
+
+        },
 
         chooseBinaryFile(type) {
             let options = {
                 properties:['openFile'],
                 filters:[
-                    {name: 'Binary File', extensions: ['jpg', 'png', 'gif']}
+                    {name: 'Binary File', extensions: ['*']}
                 ],
-            }
-
-            if (type == "php") {
-                options.title = "Pick Php Binary File" 
-            }
-            else {
-                options.title = "Pick Codeception Binary File"
             }
 
             let filePromise = dialog.showOpenDialog(options)
