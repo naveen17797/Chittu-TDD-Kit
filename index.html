@@ -5,8 +5,8 @@
 <div class="container" id="main_screen">
     
     <div class="row">
-        <div class="col-sm-6 text-left">
-            <table class="table">
+        <div class="col-sm-6 text-left bg-light">
+            <table class="table table-borderless">
                 <tr>
                     <td class="text-center">
                         Test Configuration
@@ -48,9 +48,9 @@
             </table>
             
         </div>
-        <div class="col-sm-6">
+        <div class="col-sm-6 bg-light">
 
-            <table class="table">
+            <table class="table table-borderless">
                 <tr>
                     <td class="text-center">
                         Path Configuration
@@ -109,12 +109,24 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-6 text-center">
-        </div>
         <div class="col-sm-6">
             <br/>
-            <table class="table table-striped">
-                <tr><th>Failed Tests</th></tr>
+            <table class="table table-borderless">
+                
+                <tr>
+                    <th>Failed Tests</th>
+                    <th>Test Name</th>
+                </tr>
+                <template v-for="item in preferences.failed_tests">
+                    <tr>
+                        <td>
+                            <img class="img img-rounded" src="failure.png" height="32px" width="32px">
+                        </td>
+                        <td>
+                            <b>{{ item }}</b>
+                        </td>
+                    </tr>
+                </template>
             </table>
         </div>
 </div>
@@ -138,6 +150,7 @@ function getData() {
             php_binary_file: "",
             codeception_binary_file: "",
             project_root: "",
+            failed_tests: [],
         }
     }
     else {
@@ -206,17 +219,34 @@ new Vue({
             return shell_command
         },
         sendSuccessNotification(message) {
+            var options = {
+                body: message,
+                icon: 'success.png'
+            }
+            var n = new Notification("success",options);
+        },
 
+        sendFailureNotification(message) {
+            var options = {
+                body: message,
+                icon: 'failure.png'
+            }
+            var n = new Notification("Failure",options);
         },
 
         checkIfTestsFailedAndSendNotification() {
-            if (fs.existsSync(
-                path.join(this.preferences.project_root, "tests", "_output", "failed"))
-            ) {
+            const failed_file = path.join(this.preferences.project_root, "tests", "_output", "failed")
+            if (fs.existsSync(failed_file)) {
+                const failed_tests_array = []
                 // tests failed, so read the file line by line and send failed notification
+                fs.readFileSync(failed_file, 'utf-8').split(/\r?\n/).forEach(function(line){
+                    failed_tests_array.push(line)
+                })
+                this.sendFailureNotification(failed_tests_array.length + " tests failed")
+                Vue.set(this.preferences, "failed_tests", failed_tests_array)
             }
             else {
-                this.sendSuccessNotification()
+                this.sendSuccessNotification("All tests passed")
             }
         },
 
@@ -229,7 +259,9 @@ new Vue({
                     const exec = require('child_process').exec;
                     const child = exec(this.constructShellCommand(),
                         (error, stdout, stderr) => {
-                            console.log(error)
+                            
+                            this.checkIfTestsFailedAndSendNotification()
+                            
                     });
                 }
             }
