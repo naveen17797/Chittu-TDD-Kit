@@ -2,7 +2,7 @@
 
 <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.css">
 
-<div class="container">
+<div class="container" id="main_screen">
     
     <div class="row">
         <div class="col-sm-6 text-left">
@@ -62,9 +62,9 @@
                             <div class="input-group-prepend">
                             <span class="input-group-text bg-light">PHP Binary Path</span>
                             </div>
-                            <input type="text" class="form-control" disabled>
+                            <input type="text" class="form-control" disabled v-model="preferences.php_binary_file">
                             <div class="input-group-append">
-                                <button class="btn btn-outline-primary">Browse</button>
+                                <button class="btn btn-outline-primary" @click="chooseBinaryFile('php')">Browse</button>
                             </div>
                         </div>
                     </td>
@@ -75,9 +75,9 @@
                                 <div class="input-group-prepend">
                                 <span class="input-group-text bg-light">Codcept Binary Path</span>
                                 </div>
-                                <input type="text" class="form-control" disabled>
+                                <input type="text" class="form-control" disabled v-model="preferences.codeception_binary_file">
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-primary">Browse</button>
+                                    <button class="btn btn-outline-primary" @click="chooseBinaryFile('codecept')">Browse</button>
                                 </div>
                             </div>
                     </td>
@@ -119,5 +119,59 @@
         </div>
 </div>
 
+</div>
 
 <script src="./node_modules/vue/dist/vue.js"></script>
+<script>
+const {dialog} = require('electron').remote;
+
+
+
+
+
+new Vue({
+    el: "#main_screen",
+    data: {
+        preferences:{
+            php_binary_file: "",
+            codeception_binary_file: "",
+        },
+    },
+    methods: {
+
+        chooseBinaryFile(type) {
+            let options = {
+                properties:['openFile'],
+                filters:[
+                    {name: 'Binary File', extensions: ['jpg', 'png', 'gif']}
+                ],
+            }
+
+            if (type == "php") {
+                options.title = "Pick Php Binary File" 
+            }
+            else {
+                options.title = "Pick Codeception Binary File"
+            }
+
+            let filePromise = dialog.showOpenDialog(options)
+            const self = this
+            filePromise.then(function(fileObject) {
+                let filePaths = fileObject.filePaths
+                if (filePaths.length > 0) {
+                    const choosen_file_path = filePaths[0]
+                    if (type == "php") {
+                        self.preferences.php_binary_file = choosen_file_path
+                    }
+                    else {
+                        self.preferences.codeception_binary_file = choosen_file_path
+                    }
+                }
+            })
+        }
+
+    }
+})
+
+
+</script>
