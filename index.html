@@ -124,6 +124,7 @@
 <script src="./node_modules/vue/dist/vue.js"></script>
 <script>
 const {dialog} = require('electron').remote;
+const path = require('path')
 
 const fs = require('fs')
 const Store = require('electron-store');
@@ -169,28 +170,43 @@ new Vue({
             }
 
         },
+        validatePaths() {
+            return this.isFileOrFolder(this.preferences.php_binary_file) 
+                && this.isFileOrFolder(this.preferences.codeception_binary_file)
+                && this.isFileOrFolder(this.preferences.project_root)
+        },
+        allPathsAreNotEmpty() {
+            return this.preferences.php_binary_file != "" &&
+            this.preferences.codeception_binary_file != "" && 
+            this.preferences.project_root != ""
+        },
+
+        constructShellCommand() {
+            var shell_command = "cd " + this.preferences.project_root + " && "
+            shell_command += this.preferences.php_binary_file + " " + this.preferences.codeception_binary_file
+            shell_command += " run unit"
+            return shell_command
+        },
+        
         runTests() {
             
-            if (this.preferences.php_binary_file != "" &&
-            this.preferences.codeception_binary_file != "" && 
-            this.preferences.project_root != "")
+            if (this.allPathsAreNotEmpty())
             {
+                if (this.validatePaths()) {
 
-                if (this.isFileOrFolder(this.preferences.php_binary_file) 
-                && this.isFileOrFolder(this.preferences.codeception_binary_file)
-                && this.isFileOrFolder(this.preferences.project_root)) {
-                    var shell_command = "cd " + this.preferences.project_root + " && "
-                    shell_command += this.preferences.php_binary_file + " " + this.preferences.codeception_binary_file
-                    shell_command += " run unit"
                     let spawn = require("child_process").spawn;
-
                     const exec = require('child_process').exec;
-                    const child = exec(shell_command,
+                    const child = exec(constructShellCommand(),
                         (error, stdout, stderr) => {
-                            console.log(`stdout: ${stdout}`);
-                            console.log(`stderr: ${stderr}`);
                             if (error !== null) {
-                                console.log(`exec error: ${error}`);
+                                new Notification('Error', {
+                                    body: 'Problem in executing the tests'
+                                })
+                            }
+                            else if (fs.existsSync(this.preferences.project_root)) {
+                                new Notification('Passed', {
+                                    body: 'All Tests Passed'
+                                })
                             }
                     });
                 }
