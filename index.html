@@ -125,39 +125,75 @@
 <script>
 const {dialog} = require('electron').remote;
 
+const fs = require('fs')
+const Store = require('electron-store');
+const store = new Store();
+
+function getData() {
+    var result = store.get('preferences')
+    if (result == undefined) {
+        return {
+            php_binary_file: "",
+            codeception_binary_file: "",
+            project_root: "",
+        }
+    }
+    else {
+        return result
+    }
+}
 
 
 new Vue({
     el: "#main_screen",
     data: {
-        preferences:{
-            php_binary_file: "",
-            codeception_binary_file: "",
-            project_root:"",
-        },
+        preferences:getData(),
+    },
+    watch: {
+        preferences: {
+            handler: function (val, oldVal) {
+                store.set("preferences", val)
+            },
+            deep: true
+        }
     },
     methods: {
+        isFileOrFolder(path) {
 
+            if (fs.existsSync(path)) {
+                return true
+            }
+            else {
+                alert(path + " is not a valid path")
+                return false
+            }
+
+        },
         runTests() {
-        
+            
             if (this.preferences.php_binary_file != "" &&
             this.preferences.codeception_binary_file != "" && 
             this.preferences.project_root != "")
             {
-                var shell_command = "cd " + this.preferences.project_root + " && "
-                shell_command += this.preferences.php_binary_file + " " + this.preferences.codeception_binary_file
-                shell_command += " run unit"
-                let spawn = require("child_process").spawn;
 
-                const exec = require('child_process').exec;
-                const child = exec(shell_command,
-                    (error, stdout, stderr) => {
-                        console.log(`stdout: ${stdout}`);
-                        console.log(`stderr: ${stderr}`);
-                        if (error !== null) {
-                            console.log(`exec error: ${error}`);
-                        }
-                });
+                if (this.isFileOrFolder(this.preferences.php_binary_file) 
+                && this.isFileOrFolder(this.preferences.codeception_binary_file)
+                && this.isFileOrFolder(this.preferences.project_root)) {
+                    var shell_command = "cd " + this.preferences.project_root + " && "
+                    shell_command += this.preferences.php_binary_file + " " + this.preferences.codeception_binary_file
+                    shell_command += " run unit"
+                    let spawn = require("child_process").spawn;
+
+                    const exec = require('child_process').exec;
+                    const child = exec(shell_command,
+                        (error, stdout, stderr) => {
+                            console.log(`stdout: ${stdout}`);
+                            console.log(`stderr: ${stderr}`);
+                            if (error !== null) {
+                                console.log(`exec error: ${error}`);
+                            }
+                    });
+                }
             }
             else {
                 alert("fill the path fields")
