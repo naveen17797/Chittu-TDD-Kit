@@ -1,6 +1,7 @@
 <title>Chittu TDD Kit</title>
 
 <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.css">
+<link rel="stylesheet" href="./node_modules/font-awesome/css/font-awesome.css">
 
 <div class="container" id="main_screen">
     
@@ -19,32 +20,22 @@
                 </tr>
                 <tr>
                     <td>
-                        <input type="checkbox" value="unit" name="test_type"> Unit Test
+                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_unit_enabled"> Unit Test
                     </td>
                 </tr>
             
                 <tr>
                     <td>
-                        <input type="checkbox" value="unit" name="test_type"> Acceptance Test
+                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_acceptance_enabled"> Acceptance Test
                     </td>
                 </tr>
                 
                 <tr>
                     <td>
-                        <input type="checkbox" value="unit" name="test_type"> Functional Test
+                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_functional_enabled"> Functional Test
                     </td>
                 </tr>
-            
-                <tr>
-                    <td>
-                        <b>Run tests as you type (useful for TDD)</b>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="checkbox"> Automatically run tests on file change
-                    </td>
-                </tr>
+        
             </table>
             
         </div>
@@ -103,31 +94,81 @@
 
     <div class="row">
         <div class="col-sm-12 text-center">
+            
+            <template v-if="isTestRunning">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
+                </div>
+            </template>
+            <template v-if="isWatchingDirectory">
+                <div class="alert alert-info">
+                    Currently watching  {{ this.preferences.project_root }} for file changes, the tests will
+                    run automatically if file change is detected
+                </div>
+            </template>
             <br/>
-            <button class="btn btn-primary" @click="runTests()">Run Tests</button>
+            <button class="btn btn-primary btn-lg" @click="runTests()" :disabled="isTestRunning == true">
+                
+                <template v-if="isTestRunning">
+                    Tests Running ...
+                </template>
+                <template v-else>
+                    <i class="fa fa-play"></i> Run Tests
+                </template>
+
+
+
+            </button>
+
+            <button class="btn btn-lg btn-dark" @click="watchDirectory()">
+                
+                    <template v-if="isWatchingDirectory">
+                            <i class="fa fa-lg fa-eye-slash"></i> Stop Watching<br/>
+                            
+                    </template>
+                    <template v-else>
+                        <i class="fa fa-lg fa-eye"></i> Watch Project Directory<br/>
+    
+                    </template>
+    
+                </button>
+
+
+
             <br/>
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-6">
+        <div class="col-sm-12">
             <br/>
-            <table class="table table-borderless">
-                
-                <tr>
-                    <th>Failed Tests</th>
-                    <th>Test Name</th>
-                </tr>
-                <template v-for="item in preferences.failed_tests">
-                    <tr>
-                        <td>
-                            <img class="img img-rounded" src="failure.png" height="32px" width="32px">
-                        </td>
-                        <td>
-                            <b>{{ item }}</b>
-                        </td>
-                    </tr>
-                </template>
-            </table>
+            <template v-if="preferences.failed_tests.length > 0">
+                    <table class="table table-borderless">
+                        
+                        <tr>
+                            <th>Failed Tests</th>
+                            <th>Test Name</th>
+                        </tr>
+                        <template v-for="item in preferences.failed_tests">
+                            <tr>
+                                <td>
+                                    <img class="img img-rounded" src="failure.png" height="32px" width="32px">
+                                </td>
+                                <td>
+                                    <b>{{ item }}</b>
+                                </td>
+                            </tr>
+                        </template>
+                    </table>
+            </template>
+            <template v-else>
+                <div class="text-center">
+                    <h3>
+                        <img class="img img-rounded" src="success.png" height="32px" width="32px">
+                         No Tests Failed
+                    </h3>
+                </div>
+            </template>
+
         </div>
 </div>
 
@@ -151,6 +192,9 @@ function getData() {
             codeception_binary_file: "",
             project_root: "",
             failed_tests: [],
+            is_unit_enabled: false,
+            is_acceptance_enabled: false,
+            is_functional_enabled: false,
         }
     }
     else {
@@ -166,6 +210,9 @@ new Vue({
     el: "#main_screen",
     data: {
         preferences:getData(),
+        isTestRunning: false,
+        isWatchingDirectory: false,
+        
     },
     watch: {
         preferences: {
@@ -176,6 +223,14 @@ new Vue({
         }
     },
     methods: {
+        watchDirectory() {
+            if (this.allPathsAreNotEmpty())
+            {
+                if (this.validatePaths()) {
+                    this.isWatchingDirectory = !this.isWatchingDirectory
+                }
+            }
+        },
         isFileOrFolder(path) {
 
             if (fs.existsSync(path)) {
@@ -211,11 +266,24 @@ new Vue({
             this.preferences.codeception_binary_file != "" && 
             this.preferences.project_root != ""
         },
-
+        checkAtleastOneTestTypeEnabled() {
+            return (this.preferences.is_unit_enabled || 
+            this.preferences.is_functional_enabled || 
+            this.preferences.is_acceptance_enabled)
+        },
         constructShellCommand() {
             var shell_command = "cd " + this.preferences.project_root + " && "
             shell_command += this.preferences.php_binary_file + " " + this.preferences.codeception_binary_file
-            shell_command += " run unit"
+            shell_command += " run "
+            if (this.preferences.is_unit_enabled) {
+                shell_command += "unit"
+            }
+            if (this.preferences.is_functional_enabled){
+                shell_command += ",functional"
+            }
+            if (this.preferences.is_acceptance_enabled){
+                shell_command += ",acceptance"
+            }
             return shell_command
         },
         sendSuccessNotification(message) {
@@ -235,6 +303,8 @@ new Vue({
         },
 
         checkIfTestsFailedAndSendNotification() {
+            // remove failed tests array
+            Vue.set(this.preferences, "failed_tests", [])
             const failed_file = path.join(this.preferences.project_root, "tests", "_output", "failed")
             if (fs.existsSync(failed_file)) {
                 const failed_tests_array = []
@@ -256,13 +326,19 @@ new Vue({
             {
                 if (this.validatePaths()) {
 
-                    const exec = require('child_process').exec;
-                    const child = exec(this.constructShellCommand(),
-                        (error, stdout, stderr) => {
-                            
-                            this.checkIfTestsFailedAndSendNotification()
-                            
-                    });
+                    if (this.checkAtleastOneTestTypeEnabled()) {
+                        const exec = require('child_process').exec;
+                        this.isTestRunning = true
+                        const child = exec(this.constructShellCommand(),
+                            (error, stdout, stderr) => {
+                                this.isTestRunning = false
+                                this.checkIfTestsFailedAndSendNotification()
+                                
+                        });
+                    }
+                    else {
+                        alert("Choose alteast one test type")
+                    }
                 }
             }
             else {
