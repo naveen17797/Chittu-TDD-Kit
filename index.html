@@ -20,19 +20,19 @@
                 </tr>
                 <tr>
                     <td>
-                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_unit_enabled"> Unit Test
+                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_unit_enabled"  :disabled="isWatchingDirectory == true"> Unit Test
                     </td>
                 </tr>
             
                 <tr>
                     <td>
-                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_acceptance_enabled"> Acceptance Test
+                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_acceptance_enabled"  :disabled="isWatchingDirectory == true"> Acceptance Test
                     </td>
                 </tr>
                 
                 <tr>
                     <td>
-                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_functional_enabled"> Functional Test
+                        <input type="checkbox" value="unit" name="test_type" v-model="preferences.is_functional_enabled"  :disabled="isWatchingDirectory == true"> Functional Test
                     </td>
                 </tr>
         
@@ -53,7 +53,7 @@
                             <div class="input-group-prepend">
                             <span class="input-group-text bg-light">PHP Binary Path</span>
                             </div>
-                            <input type="text" class="form-control"  v-model="preferences.php_binary_file">
+                            <input type="text" class="form-control"  v-model="preferences.php_binary_file" :disabled="isWatchingDirectory == true">
                             <div class="input-group-append">
                                 <button class="btn btn-outline-primary" @click="chooseBinaryFile('php')">Browse</button>
                             </div>
@@ -66,7 +66,7 @@
                                 <div class="input-group-prepend">
                                 <span class="input-group-text bg-light">Codcept Binary Path</span>
                                 </div>
-                                <input type="text" class="form-control"  v-model="preferences.codeception_binary_file">
+                                <input type="text" class="form-control"  v-model="preferences.codeception_binary_file" :disabled="isWatchingDirectory == true">
                                 <div class="input-group-append">
                                     <button class="btn btn-outline-primary" @click="chooseBinaryFile('codecept')">Browse</button>
                                 </div>
@@ -80,7 +80,7 @@
                                 <div class="input-group-prepend">
                                 <span class="input-group-text bg-light">Your Project Root</span>
                                 </div>
-                                <input type="text" class="form-control" v-model="preferences.project_root">
+                                <input type="text" class="form-control" v-model="preferences.project_root" :disabled="isWatchingDirectory == true">
                                 <div class="input-group-append">
                                     <button class="btn btn-outline-primary" @click="chooseProjectFolder()">Browse</button>
                                 </div>
@@ -107,7 +107,7 @@
                 </div>
             </template>
             <br/>
-            <button class="btn btn-primary btn-lg" @click="runTests()" :disabled="isTestRunning == true">
+            <button class="btn btn-primary btn-lg" @click="runTests()" :disabled="isTestRunning == true || isWatchingDirectory == true">
                 
                 <template v-if="isTestRunning">
                     Tests Running ...
@@ -151,7 +151,7 @@
                         <template v-for="item in preferences.failed_tests">
                             <tr>
                                 <td>
-                                    <img class="img img-rounded" src="failure.png" height="32px" width="32px">
+                                    <img class="img img-rounded" src="failure.png" height="16px" width="16px">
                                 </td>
                                 <td>
                                     <b>{{ item }}</b>
@@ -182,7 +182,8 @@ const path = require('path')
 const fs = require('fs')
 const Store = require('electron-store');
 const store = new Store();
-
+var watch = require('node-watch');
+var watcher = null
 // method to store and fetch the path data
 function getData() {
     var result = store.get('preferences')
@@ -224,10 +225,26 @@ new Vue({
     },
     methods: {
         watchDirectory() {
-            if (this.allPathsAreNotEmpty())
+            if (this.allPathsAreNotEmpty() && this.checkAtleastOneTestTypeEnabled())
             {
                 if (this.validatePaths()) {
-                    this.isWatchingDirectory = !this.isWatchingDirectory
+                    if (this.isWatchingDirectory) {
+                        watcher.close()
+                        this.isWatchingDirectory = false
+                    }
+                    else {
+                        const self = this
+                        this.isWatchingDirectory = true
+                        watcher  = watch(this.preferences.project_root, { filter: /\.php$/, recursive: true }, function(evt, name) {
+                            
+                            if (!this.isTestRunning) {
+                                self.runTests()
+                            }
+                            
+                        });
+                    }
+                   
+
                 }
             }
         },
